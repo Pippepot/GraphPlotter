@@ -11,6 +11,14 @@ class GraphPlotter : public olc::PixelGameEngine
 	float zoom;
 	
 	olc::vf2d oldMousePos;
+	bool isDraggingMouse;
+
+	std::string inputString;
+
+	const int inputBarSize = 64;
+	int graphWindowHeight;
+	int graphWindowWidth;
+
 
 public:
 	GraphPlotter()
@@ -23,6 +31,9 @@ public:
 	bool OnUserCreate() override
 	{
 		// Called once at the start, so create things here
+		graphWindowWidth = ScreenWidth();
+		graphWindowHeight = ScreenHeight() - inputBarSize;
+
 		panOffset = olc::vf2d(0, 0);
 		zoom = 10;
 		graphs.push_back(Graph("x"));
@@ -35,17 +46,24 @@ public:
 	{
 		Clear(olc::BLACK);
 
-		// Pan is constant screen size
+		FillRect(0, graphWindowHeight, graphWindowWidth, ScreenHeight(), olc::DARK_GREY);
+		DrawString(10, graphWindowHeight, inputString + " sad", olc::WHITE);
 
-		// Mouse + pan = constant when panning
 
 		// Pan
-		olc::vf2d mousePos = olc::vf2d((float)GetMouseX() / ScreenWidth(), 1 - (float)GetMouseY() / ScreenHeight());
+		olc::vf2d mousePos = olc::vf2d((float)GetMouseX() / graphWindowWidth, 1 - (float)GetMouseY() / graphWindowHeight);
 
-		if (GetMouse(0).bPressed)
+		if (GetMouse(0).bReleased || mousePos.x > 0.99 || mousePos.x < 0.01 || mousePos.y > 0.99 || mousePos.y < 0.01)
+		{
+			isDraggingMouse = false;
+		}
+
+		if (GetMouse(0).bPressed) {
 			oldMousePos = mousePos;
+			isDraggingMouse = true;
+		}
 
-		if (GetMouse(0).bHeld) {
+		if (isDraggingMouse) {
 			panOffset += (oldMousePos - mousePos) * zoom;
 
 			oldMousePos = mousePos;
@@ -87,17 +105,30 @@ public:
 
 
 		// Draw lines
-		// Horizontal panOffset.y * ScreenHeight() / zoom + 0.5 * ScreenHeight()
-		DrawLine(0, GraphSpaceToPixelSpaceY(0), ScreenWidth(), GraphSpaceToPixelSpaceY(0), olc::WHITE);
+		// Horizontal
+		olc::vf2d axes = GraphSpaceToPixelSpace(olc::vf2d(0, 0));
+
+		if (axes.y < graphWindowHeight && axes.y > 0)
+			DrawLine(0, axes.y, graphWindowWidth, axes.y, olc::WHITE);
 		// Vertical
-		DrawLine(GraphSpaceToPixelSpaceX(0), 0, GraphSpaceToPixelSpaceX(0), ScreenHeight(), olc::WHITE);
+		if (axes.x < graphWindowWidth && axes.y > 0)
+			DrawLine(axes.x, 0, axes.x, graphWindowHeight, olc::WHITE);
+
+		
 
 		return true;
 	}
 
+	void olc_UpdateKeyState(int32_t key, bool state) override
+	{
+		olc::PixelGameEngine::olc_UpdateKeyState(key, state);
+		char c = (char)key;
+		inputString += c;
+	}
+
 	void DrawFunctionValuePixelSpace(int x, int value, int previousValue, olc::Pixel pixel)
 	{
-		if (previousValue > ScreenHeight() || previousValue < 0)
+		if ((previousValue > graphWindowHeight || previousValue < 0) && (value > graphWindowHeight || value < 0))
 			return;
 
 		Draw(x, value, pixel);

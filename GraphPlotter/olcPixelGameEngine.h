@@ -897,7 +897,7 @@ namespace olc
 		void olc_CoreUpdate();
 		void olc_PrepareEngine();
 		void olc_UpdateMouseState(int32_t button, bool state);
-		void olc_UpdateKeyState(int32_t key, bool state);
+		virtual void olc_UpdateKeyState(int32_t key, bool state);
 		void olc_UpdateMouseFocus(bool state);
 		void olc_UpdateKeyFocus(bool state);
 		void olc_Terminate();
