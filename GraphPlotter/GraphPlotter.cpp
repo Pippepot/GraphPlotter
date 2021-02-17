@@ -1,23 +1,19 @@
 #define OLC_PGE_APPLICATION
 #include "olcPixelGameEngine.h"
+#include "GraphInput.h"
 #include "Graph.h"
+#include "GraphUtility.h"
 
 // Override base class with your custom functionality
 class GraphPlotter : public olc::PixelGameEngine
 {
 	std::vector<Graph> graphs;
 
-	olc::vf2d panOffset;
-	float zoom;
 	
 	olc::vf2d oldMousePos;
 	bool isDraggingMouse;
 
-	std::string inputString;
-
 	const int inputBarSize = 64;
-	int graphWindowHeight;
-	int graphWindowWidth;
 
 
 public:
@@ -47,7 +43,8 @@ public:
 		Clear(olc::BLACK);
 
 		FillRect(0, graphWindowHeight, graphWindowWidth, ScreenHeight(), olc::DARK_GREY);
-		DrawString(10, graphWindowHeight, inputString + " sad", olc::WHITE);
+		DrawString(10, graphWindowHeight + 10, inputString, olc::WHITE, 6);
+		DrawLine(8 + cursor * 48, graphWindowHeight + 8, 8 + cursor * 48, ScreenHeight() - 8);
 
 
 		// Pan
@@ -122,8 +119,8 @@ public:
 	void olc_UpdateKeyState(int32_t key, bool state) override
 	{
 		olc::PixelGameEngine::olc_UpdateKeyState(key, state);
-		char c = (char)key;
-		inputString += c;
+
+		UpdateKeyState(key, state);
 	}
 
 	void DrawFunctionValuePixelSpace(int x, int value, int previousValue, olc::Pixel pixel)
@@ -156,36 +153,7 @@ public:
 
 	}
 
-	olc::vf2d GraphSpaceToPixelSpace(olc::vf2d point)
-	{
-		return olc::vf2d(GraphSpaceToPixelSpaceX(point.x), GraphSpaceToPixelSpaceY(point.y));
-	}
 
-	float GraphSpaceToPixelSpaceX(float x)
-	{
-		return ((x - panOffset.x) / zoom + 0.5)* ScreenWidth();
-	}
-
-	float GraphSpaceToPixelSpaceY(float y)
-	{
-		return ((panOffset.y - y) / zoom + 0.5) * ScreenHeight();
-	}
-
-	olc::vf2d ScreenSpaceToGraphSpace(olc::vf2d point)
-	{
-		return olc::vf2d(ScreenSpaceToGraphSpaceX(point.x), ScreenSpaceToGraphSpaceY(point.y));
-	}
-
-	float ScreenSpaceToGraphSpaceX(float x)
-	{
-		return (-0.5 * zoom + panOffset.x) + x * zoom / ScreenWidth();
-	}
-
-	float ScreenSpaceToGraphSpaceY(float y)
-	{
-
-		return (0.5 * zoom + panOffset.y) - y * zoom / ScreenHeight();
-	}
 };
 
 int main()
